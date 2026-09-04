@@ -14,10 +14,24 @@ exports.getDoctors = async (req, res) => {
 exports.createDoctor = async (req, res) => {
   try {
     const { name, specialization, qualifications, contactEmail, consultationFee, availableDays } = req.body;
-    if (!name || !specialization || !qualifications || !contactEmail || consultationFee === undefined || !availableDays) {
-      return res.status(400).json({ error: 'All fields are required!' });
-    }
-    const newDoc = new Doctor(req.body);
+    
+    // Sanitize & validate required fields
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Doctor name is required' });
+    if (!specialization || !specialization.trim()) return res.status(400).json({ error: 'Specialization is required' });
+    if (!qualifications || !qualifications.trim()) return res.status(400).json({ error: 'Qualifications are required' });
+    if (!contactEmail || !contactEmail.trim()) return res.status(400).json({ error: 'Contact email is required' });
+    if (consultationFee === undefined || consultationFee < 0) return res.status(400).json({ error: 'Valid positive consultation fee is required' });
+    if (!availableDays || !availableDays.trim()) return res.status(400).json({ error: 'Available days are required' });
+
+    const newDoc = new Doctor({
+      name: name.trim(),
+      specialization: specialization.trim(),
+      qualifications: qualifications.trim(),
+      contactEmail: contactEmail.trim().toLowerCase(),
+      consultationFee: Number(consultationFee),
+      availableDays: availableDays.trim()
+    });
+
     await newDoc.save();
     res.status(201).json(newDoc);
   } catch (err) {
@@ -28,7 +42,11 @@ exports.createDoctor = async (req, res) => {
 // 3. Update doctor
 exports.updateDoctor = async (req, res) => {
   try {
-    const updated = await Doctor.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (req.body.consultationFee !== undefined && req.body.consultationFee < 0) {
+      return res.status(400).json({ error: 'Consultation fee cannot be negative' });
+    }
+    const updated = await Doctor.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ error: 'Doctor profile not found' });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -38,7 +56,8 @@ exports.updateDoctor = async (req, res) => {
 // 4. Delete doctor
 exports.deleteDoctor = async (req, res) => {
   try {
-    await Doctor.findByIdAndDelete(req.params.id);
+    const deleted = await Doctor.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Doctor profile not found' });
     res.json({ message: 'Doctor deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

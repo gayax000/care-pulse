@@ -16,12 +16,20 @@ export default function AppointmentModal({ isOpen, onClose, onSave, editingApp }
 
   const validate = () => {
     const errs = {};
-    if (!formData.patientName.trim()) errs.patientName = 'Patient name is required';
-    if (!formData.patientPhone.trim() || formData.patientPhone.length < 9) {
-      errs.patientPhone = 'Valid contact number is required';
+    if (!formData.patientName.trim()) {
+      errs.patientName = 'Patient full name is required';
     }
-    if (!formData.doctorName.trim()) errs.doctorName = 'Doctor name is required';
-    if (!formData.appointmentDate.trim()) errs.appointmentDate = 'Date is required';
+    const phoneRegex = /^\d{9,10}$/;
+    const cleanedPhone = formData.patientPhone.replace(/\D/g, '');
+    if (!formData.patientPhone.trim() || !phoneRegex.test(cleanedPhone)) {
+      errs.patientPhone = 'Please enter a valid 9-10 digit phone number (e.g. 0771234567)';
+    }
+    if (!formData.doctorName.trim()) {
+      errs.doctorName = 'Doctor / Consultant name is required';
+    }
+    if (!formData.appointmentDate.trim()) {
+      errs.appointmentDate = 'Appointment date is required';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -38,28 +46,54 @@ export default function AppointmentModal({ isOpen, onClose, onSave, editingApp }
         <h3>{editingApp ? '📑 Edit Appointment' : '📑 Book Patient Appointment'}</h3>
         <form onSubmit={handleSubmit} style={{ marginTop: '15px' }}>
           <div className="form-group">
-            <label>Patient Full Name</label>
-            <input className="form-control" placeholder="Nimal Silva" value={formData.patientName} onChange={e => setFormData({...formData, patientName: e.target.value})} />
+            <label>Patient Full Name <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              className="form-control" 
+              required
+              placeholder="Nimal Silva" 
+              value={formData.patientName} 
+              onChange={e => setFormData({...formData, patientName: e.target.value})} 
+            />
             {errors.patientName && <div className="error-text">{errors.patientName}</div>}
           </div>
           <div className="form-group">
-            <label>Contact Phone</label>
-            <input className="form-control" placeholder="0771234567" value={formData.patientPhone} onChange={e => setFormData({...formData, patientPhone: e.target.value})} />
+            <label>Contact Phone <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              type="tel"
+              className="form-control" 
+              required
+              pattern="[0-9]{9,10}"
+              placeholder="0771234567" 
+              value={formData.patientPhone} 
+              onChange={e => setFormData({...formData, patientPhone: e.target.value})} 
+            />
             {errors.patientPhone && <div className="error-text">{errors.patientPhone}</div>}
           </div>
           <div className="form-group">
-            <label>Doctor / Consultant</label>
-            <input className="form-control" placeholder="Dr. Kasun Perera" value={formData.doctorName} onChange={e => setFormData({...formData, doctorName: e.target.value})} />
+            <label>Doctor / Consultant <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              className="form-control" 
+              required
+              placeholder="Dr. Kasun Perera" 
+              value={formData.doctorName} 
+              onChange={e => setFormData({...formData, doctorName: e.target.value})} 
+            />
             {errors.doctorName && <div className="error-text">{errors.doctorName}</div>}
           </div>
           <div className="form-group">
-            <label>Appointment Date</label>
-            <input type="date" className="form-control" value={formData.appointmentDate} onChange={e => setFormData({...formData, appointmentDate: e.target.value})} />
+            <label>Appointment Date <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              type="date" 
+              required
+              className="form-control" 
+              value={formData.appointmentDate} 
+              onChange={e => setFormData({...formData, appointmentDate: e.target.value})} 
+            />
             {errors.appointmentDate && <div className="error-text">{errors.appointmentDate}</div>}
           </div>
           <div className="form-group">
-            <label>Preferred Time Slot</label>
-            <select className="form-control" value={formData.timeSlot} onChange={e => setFormData({...formData, timeSlot: e.target.value})}>
+            <label>Preferred Time Slot <span style={{ color: 'red' }}>*</span></label>
+            <select className="form-control" required value={formData.timeSlot} onChange={e => setFormData({...formData, timeSlot: e.target.value})}>
               <option>04:30 PM</option>
               <option>05:00 PM</option>
               <option>05:30 PM</option>

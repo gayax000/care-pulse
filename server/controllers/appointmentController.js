@@ -13,11 +13,23 @@ exports.getAppointments = async (req, res) => {
 // 2. Book new appointment
 exports.createAppointment = async (req, res) => {
   try {
-    const { patientName, patientPhone, doctorName, appointmentDate, timeSlot } = req.body;
-    if (!patientName || !patientPhone || !doctorName || !appointmentDate || !timeSlot) {
-      return res.status(400).json({ error: 'All fields are required!' });
-    }
-    const newApp = new Appointment(req.body);
+    const { patientName, patientPhone, doctorName, appointmentDate, timeSlot, status } = req.body;
+    
+    if (!patientName || !patientName.trim()) return res.status(400).json({ error: 'Patient name is required' });
+    if (!patientPhone || !patientPhone.trim()) return res.status(400).json({ error: 'Patient phone number is required' });
+    if (!doctorName || !doctorName.trim()) return res.status(400).json({ error: 'Doctor name is required' });
+    if (!appointmentDate || !appointmentDate.trim()) return res.status(400).json({ error: 'Appointment date is required' });
+    if (!timeSlot || !timeSlot.trim()) return res.status(400).json({ error: 'Time slot is required' });
+
+    const newApp = new Appointment({
+      patientName: patientName.trim(),
+      patientPhone: patientPhone.trim(),
+      doctorName: doctorName.trim(),
+      appointmentDate: appointmentDate.trim(),
+      timeSlot: timeSlot.trim(),
+      status: status || 'Pending'
+    });
+
     await newApp.save();
     res.status(201).json(newApp);
   } catch (err) {
@@ -28,7 +40,8 @@ exports.createAppointment = async (req, res) => {
 // 3. Update appointment
 exports.updateAppointment = async (req, res) => {
   try {
-    const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ error: 'Appointment not found' });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -38,7 +51,8 @@ exports.updateAppointment = async (req, res) => {
 // 4. Delete appointment
 exports.deleteAppointment = async (req, res) => {
   try {
-    await Appointment.findByIdAndDelete(req.params.id);
+    const deleted = await Appointment.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Appointment not found' });
     res.json({ message: 'Appointment deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

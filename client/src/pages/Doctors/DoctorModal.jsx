@@ -16,16 +16,22 @@ export default function DoctorModal({ isOpen, onClose, onSave, editingDoc }) {
 
   const validate = () => {
     const errs = {};
-    if (!formData.name.trim()) errs.name = 'Doctor name is required';
-    if (!formData.qualifications.trim()) errs.qualifications = 'Qualifications are required';
+    if (!formData.name.trim() || formData.name.trim().length < 3) {
+      errs.name = 'Doctor name must be at least 3 characters long';
+    }
+    if (!formData.qualifications.trim()) {
+      errs.qualifications = 'Qualifications / Degrees are required';
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.contactEmail.trim() || !emailRegex.test(formData.contactEmail)) {
-      errs.contactEmail = 'Valid contact email is required';
+    if (!formData.contactEmail.trim() || !emailRegex.test(formData.contactEmail.trim())) {
+      errs.contactEmail = 'Please enter a valid email address (e.g. doctor@carepulse.lk)';
     }
-    if (!formData.consultationFee || formData.consultationFee < 0) {
-      errs.consultationFee = 'Valid fee is required';
+    if (formData.consultationFee === '' || Number(formData.consultationFee) < 0) {
+      errs.consultationFee = 'Consultation fee must be a positive number';
     }
-    if (!formData.availableDays.trim()) errs.availableDays = 'Available days are required';
+    if (!formData.availableDays.trim()) {
+      errs.availableDays = 'Available days and hours are required';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -42,13 +48,20 @@ export default function DoctorModal({ isOpen, onClose, onSave, editingDoc }) {
         <h3>{editingDoc ? '🩺 Edit Doctor Profile' : '🩺 Add New Doctor'}</h3>
         <form onSubmit={handleSubmit} style={{ marginTop: '15px' }}>
           <div className="form-group">
-            <label>Doctor Name</label>
-            <input className="form-control" placeholder="Dr. Kasun Perera" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            <label>Doctor Name <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              className="form-control" 
+              required
+              minLength={3}
+              placeholder="Dr. Kasun Perera" 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})} 
+            />
             {errors.name && <div className="error-text">{errors.name}</div>}
           </div>
           <div className="form-group">
-            <label>Specialization</label>
-            <select className="form-control" value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})}>
+            <label>Specialization <span style={{ color: 'red' }}>*</span></label>
+            <select className="form-control" required value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})}>
               <option>General Medicine</option>
               <option>Cardiology</option>
               <option>Dermatology</option>
@@ -58,23 +71,51 @@ export default function DoctorModal({ isOpen, onClose, onSave, editingDoc }) {
             </select>
           </div>
           <div className="form-group">
-            <label>Qualifications / Degrees</label>
-            <input className="form-control" placeholder="MBBS, MD, MRCP (UK)" value={formData.qualifications} onChange={e => setFormData({...formData, qualifications: e.target.value})} />
+            <label>Qualifications / Degrees <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              className="form-control" 
+              required
+              placeholder="MBBS, MD, MRCP (UK)" 
+              value={formData.qualifications} 
+              onChange={e => setFormData({...formData, qualifications: e.target.value})} 
+            />
             {errors.qualifications && <div className="error-text">{errors.qualifications}</div>}
           </div>
           <div className="form-group">
-            <label>Contact Email</label>
-            <input type="email" className="form-control" placeholder="doctor@carepulse.lk" value={formData.contactEmail} onChange={e => setFormData({...formData, contactEmail: e.target.value})} />
+            <label>Contact Email <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              type="email" 
+              className="form-control" 
+              required
+              placeholder="doctor@carepulse.lk" 
+              value={formData.contactEmail} 
+              onChange={e => setFormData({...formData, contactEmail: e.target.value})} 
+            />
             {errors.contactEmail && <div className="error-text">{errors.contactEmail}</div>}
           </div>
           <div className="form-group">
-            <label>Consultation Fee (Rs.)</label>
-            <input type="number" min="0" className="form-control" placeholder="2500" value={formData.consultationFee} onChange={e => setFormData({...formData, consultationFee: Number(e.target.value)})} />
+            <label>Consultation Fee (Rs.) <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              type="number" 
+              min="0" 
+              step="50"
+              required
+              className="form-control" 
+              placeholder="2500" 
+              value={formData.consultationFee} 
+              onChange={e => setFormData({...formData, consultationFee: e.target.value === '' ? '' : Number(e.target.value)})} 
+            />
             {errors.consultationFee && <div className="error-text">{errors.consultationFee}</div>}
           </div>
           <div className="form-group">
-            <label>Available Days & Time</label>
-            <input className="form-control" placeholder="Mon, Wed, Fri (4:00 PM - 8:00 PM)" value={formData.availableDays} onChange={e => setFormData({...formData, availableDays: e.target.value})} />
+            <label>Available Days & Time <span style={{ color: 'red' }}>*</span></label>
+            <input 
+              className="form-control" 
+              required
+              placeholder="Mon, Wed, Fri (4:00 PM - 8:00 PM)" 
+              value={formData.availableDays} 
+              onChange={e => setFormData({...formData, availableDays: e.target.value})} 
+            />
             {errors.availableDays && <div className="error-text">{errors.availableDays}</div>}
           </div>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '15px' }}>

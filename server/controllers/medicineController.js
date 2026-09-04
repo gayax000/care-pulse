@@ -14,10 +14,23 @@ exports.getMedicines = async (req, res) => {
 exports.createMedicine = async (req, res) => {
   try {
     const { medicineName, category, stockQuantity, unitPrice, expiryDate, manufacturer } = req.body;
-    if (!medicineName || !category || stockQuantity === undefined || unitPrice === undefined || !expiryDate || !manufacturer) {
-      return res.status(400).json({ error: 'All fields are required!' });
-    }
-    const newMed = new Medicine(req.body);
+    
+    if (!medicineName || !medicineName.trim()) return res.status(400).json({ error: 'Medicine name is required' });
+    if (!category || !category.trim()) return res.status(400).json({ error: 'Category is required' });
+    if (stockQuantity === undefined || stockQuantity < 0) return res.status(400).json({ error: 'Valid non-negative stock quantity is required' });
+    if (unitPrice === undefined || unitPrice < 0) return res.status(400).json({ error: 'Valid non-negative unit price is required' });
+    if (!expiryDate || !expiryDate.trim()) return res.status(400).json({ error: 'Expiry date is required' });
+    if (!manufacturer || !manufacturer.trim()) return res.status(400).json({ error: 'Manufacturer is required' });
+
+    const newMed = new Medicine({
+      medicineName: medicineName.trim(),
+      category: category.trim(),
+      stockQuantity: Number(stockQuantity),
+      unitPrice: Number(unitPrice),
+      expiryDate: expiryDate.trim(),
+      manufacturer: manufacturer.trim()
+    });
+
     await newMed.save();
     res.status(201).json(newMed);
   } catch (err) {
@@ -28,7 +41,14 @@ exports.createMedicine = async (req, res) => {
 // 3. Update medicine stock / price
 exports.updateMedicine = async (req, res) => {
   try {
-    const updated = await Medicine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (req.body.stockQuantity !== undefined && req.body.stockQuantity < 0) {
+      return res.status(400).json({ error: 'Stock quantity cannot be negative' });
+    }
+    if (req.body.unitPrice !== undefined && req.body.unitPrice < 0) {
+      return res.status(400).json({ error: 'Unit price cannot be negative' });
+    }
+    const updated = await Medicine.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ error: 'Medicine record not found' });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -38,7 +58,8 @@ exports.updateMedicine = async (req, res) => {
 // 4. Delete medicine
 exports.deleteMedicine = async (req, res) => {
   try {
-    await Medicine.findByIdAndDelete(req.params.id);
+    const deleted = await Medicine.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Medicine record not found' });
     res.json({ message: 'Medicine removed successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
